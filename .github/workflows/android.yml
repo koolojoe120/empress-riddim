@@ -21,7 +21,7 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
       - name: Install deps
-        run: npm i
+        run: npm ci
       - name: Add/Sync Android
         run: |
           npx cap add android || true
