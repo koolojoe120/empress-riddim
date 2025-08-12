@@ -1,0 +1,39 @@
+name: android-apk
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - name: Install deps
+        run: npm i
+      - name: Add/Sync Android
+        run: |
+          npx cap add android || true
+          npx cap sync android
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+          chmod +x android/gradlew
+      - name: Build debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: empress-riddim-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

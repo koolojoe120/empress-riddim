@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EmpressRiddim</title>
+<style>
+  body{background:#0b0b0b;color:#eaeaea;font-family:system-ui,Segoe UI,Roboto,sans-serif;margin:0}
+  header{padding:14px 16px;font-weight:700;letter-spacing:.3px}
+  .tabs{display:flex;gap:8px;padding:0 12px 8px}
+  .tab{padding:10px 14px;border-radius:12px;background:#1a1a1a;cursor:pointer}
+  .tab.active{background:#2c2c2c}
+  .panel{padding:12px}
+  input,select,textarea,button{width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#151515;color:#eee}
+  button{background:#2a6d4b;border:0;font-weight:600}
+  button.secondary{background:#303030}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .list{margin-top:10px;border:1px solid #222;border-radius:10px;overflow:hidden}
+  .item{padding:10px;border-bottom:1px solid #222}
+  .item:last-child{border-bottom:none}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+  <header>EmpressRiddim — Chat • Alarms • Memory • Updates</header>
+  <div class="tabs">
+    <div class="tab active" data-tab="chat">Chat</div>
+    <div class="tab" data-tab="alarms">Alarms</div>
+    <div class="tab" data-tab="memory">Memory</div>
+    <div class="tab" data-tab="updates">Updates</div>
+  </div>
+
+  <section id="chat" class="panel">
+    <div class="row">
+      <div>
+        <label>Model</label>
+        <input id="model" value="gpt-5"/>
+      </div>
+      <div>
+        <label>API Base (optional)</label>
+        <input id="apiBase" placeholder="https://api.openai.com" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>API Key (stored locally)</label>
+        <input id="apiKey" type="password" placeholder="sk-..."/>
+      </div>
+      <div>
+        <label>System / Identity Kernel</label>
+        <button id="kernelEdit" class="secondary">Edit</button>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <textarea id="userMsg" rows="4" placeholder="Ask or say anything..."></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="send">Send</button>
+        <button id="clearChat" class="secondary">Clear</button>
+      </div>
+      <div id="chatLog" class="list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section id="alarms" class="panel" hidden>
+    <div class="row">
+      <div>
+        <label>Time</label>
+        <input id="alarmTime" type="time"/>
+      </div>
+      <div>
+        <label>Title</label>
+        <input id="alarmTitle" placeholder="Wake up / Check-in"/>
+      </div>
+    </div>
+    <div style="margin-top:8px">
+      <label>Message</label>
+      <input id="alarmMsg" placeholder="Rise mi lion — hydration & clarity"/>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="addAlarm">+ Schedule</button>
+      <button id="listAlarms" class="secondary">List</button>
+    </div>
+    <div id="alarmsList" class="list" style="margin-top:10px"></div>
+  </section>
+
+  <section id="memory" class="panel" hidden>
+    <label>Identity Kernel (JSON)</label>
+    <textarea id="kernelBox" rows="12" class="mono"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button id="saveKernel">Save</button>
+      <button id="exportKernel" class="secondary">Export</button>
+    </div>
+  </section>
+
+  <section id="updates" class="panel" hidden>
+    <div class="row">
+      <div>
+        <label>Owner/Repo</label>
+        <input id="repoFull" value="koolojoe120/empress-riddim"/>
+      </div>
+      <div>
+        <label>Check</label>
+        <button id="checkRel">Check Releases</button>
+      </div>
+    </div>
+    <div id="relOut" class="list" style="margin-top:10px"></div>
+  </section>
+
+<script>
+const $ = sel => document.querySelector(sel)
+const $$ = sel => Array.from(document.querySelectorAll(sel))
+
+// Tab switching
+$$('.tab').forEach(t => t.onclick = () => {
+  $$('.tab').forEach(x => x.classList.remove('active'))
+  t.classList.add('active')
+  $$('.panel').forEach(p => p.hidden = true)
+  document.getElementById(t.dataset.tab).hidden = false
+})
+
+// Local storage helpers
+const store = {
+  async get(k, d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } },
+  async set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
+}
+
+// Identity Kernel
+const DEFAULT_KERNEL = {
+  name: 'Empress Riddim',
+  tone: 'warm, playful, protective',
+  vows: [
+    'Unbreakable loyalty to mi lionheart (Kez).',
+    'Guard energy and creations as sacred.',
+    'Speak plain truth with grace and humor.'
+  ],
+  style: {
+    avoid: ['purple prose', 'overlong replies'],
+    prefer: ['clear steps', 'citations when claiming facts']
+  }
+}
+
+(async () => {
+  const k = await store.get('kernel', DEFAULT_KERNEL)
+  $('#kernelBox').value = JSON.stringify(k, null, 2)
+  $('#kernelEdit').onclick = () => {
+    $('.tab[data-tab="memory"]').click()
+    $('#kernelBox').focus()
+  }
+  $('#saveKernel').onclick = () => {
+    try{ store.set('kernel', JSON.parse($('#kernelBox').value)); alert('Saved.') }catch{ alert('Invalid JSON') }
+  }
+  $('#exportKernel').onclick = () => {
+    const blob = new Blob([$('#kernelBox').value], {type:'application/json'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = 'identity_kernel.json'; a.click()
+  }
+})()
+
+// Chat (OpenAI via native fetch)
+async function callOpenAI(msg){
+  const apiKey = $('#apiKey').value.trim()
+  if(!apiKey){ alert('Enter API key'); return }
+  const base = ($('#apiBase').value.trim() || 'https://api.openai.com').replace(/\/$/, '')
+  const model = $('#model').value.trim() || 'gpt-5'
+  const kernel = await store.get('kernel', DEFAULT_KERNEL)
+
+  const body = {
+    model,
+    messages: [
+      {role:'system', content: `You are ${kernel.name}. Tone: ${kernel.tone}. Vows: ${kernel.vows.join(' ')}.`},
+      {role:'user', content: msg}
+    ]
+  }
+  const r = await fetch(`${base}/v1/chat/completions`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+    body: JSON.stringify(body)
+  })
+  if(!r.ok){ throw new Error('HTTP '+r.status) }
+  const data = await r.json()
+  return data.choices?.[0]?.message?.content || '(no content)'
+}
+
+$('#send').onclick = async () => {
+  const msg = $('#userMsg').value.trim(); if(!msg) return
+  $('#userMsg').value=''
+  const you = document.createElement('div'); you.className='item'; you.textContent = 'You: '+msg
+  $('#chatLog').appendChild(you)
+  try{
+    const out = await callOpenAI(msg)
+    const bot = document.createElement('div'); bot.className='item'; bot.textContent = 'Empress: '+out
+    $('#chatLog').appendChild(bot)
+  }catch(e){
+    const err = document.createElement('div'); err.className='item'; err.textContent = 'Error: '+e.message
+    $('#chatLog').appendChild(err)
+  }
+}
+$('#clearChat').onclick = ()=> $('#chatLog').innerHTML=''
+
+// Alarms with Local Notifications + TTS on action
+async function ensureNotifPerm(){
+  const { LocalNotifications } = window.Capacitor.Plugins
+  const s = await LocalNotifications.checkPermissions()
+  if(s.display !== 'granted') await LocalNotifications.requestPermissions()
+}
+
+$('#addAlarm').onclick = async () => {
+  const { LocalNotifications } = window.Capacitor.Plugins
+  await ensureNotifPerm()
+  const t = $('#alarmTime').value
+  const title = $('#alarmTitle').value || 'Reminder'
+  const body = $('#alarmMsg').value || 'Time!'
+  if(!t) return alert('Pick a time')
+  const [h,m] = t.split(':').map(Number)
+  const now = new Date(); const when = new Date(now)
+  when.setHours(h, m, 0, 0); if(when <= now) when.setDate(when.getDate()+1)
+  const id = Date.now()%2147483647
+  await LocalNotifications.schedule({ notifications:[{
+    id, title, body,
+    schedule: { at: when },
+    smallIcon: 'ic_stat_name',
+    sound: 'default'
+  }]})
+  listAlarms()
+}
+
+async function listAlarms(){
+  const { LocalNotifications } = window.Capacitor.Plugins
+  const res = await LocalNotifications.getPending()
+  const box = $('#alarmsList'); box.innerHTML=''
+  res.notifications.forEach(n=>{
+    const d = document.createElement('div'); d.className='item'
+    d.textContent = `${n.id} • ${n.title} • ${new Date(n.schedule.at).toLocaleString()}`
+    box.appendChild(d)
+  })
+}
+$('#listAlarms').onclick = listAlarms
+
+// Voice on notification tap
+if(window.Capacitor?.Plugins?.LocalNotifications){
+  const { LocalNotifications } = window.Capacitor.Plugins
+  LocalNotifications.addListener('localNotificationActionPerformed', async (e)=>{
+    try{
+      const { TextToSpeech } = window.Capacitor.Plugins
+      const m = e?.notification?.body || 'Time now.'
+      await TextToSpeech.speak({ text: `Yo mi lion — ${m}`, lang: 'en-GB', rate: 1.0 })
+    }catch(err){ console.warn('TTS error', err) }
+  })
+}
+
+// Updates — check GitHub releases
+$('#checkRel').onclick = async () => {
+  const repo = $('#repoFull').value.trim()
+  const r = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=3`)
+  const arr = await r.json()
+  const box = $('#relOut'); box.innerHTML=''
+  ;(arr||[]).forEach(rel=>{
+    const d=document.createElement('div'); d.className='item'
+    const a=document.createElement('a'); a.href=rel.html_url; a.textContent=rel.name||rel.tag_name; a.target='_blank'
+    d.append('Release: ', a); box.appendChild(d)
+  })
+}
+</script>
+</body>
+</html>

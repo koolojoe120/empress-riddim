@@ -1,0 +1,30 @@
+{
+  "name": "empress-riddim",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'no web bundler; using static files'",
+    "android": "npx cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.4.2",
+    "@capacitor/core": "7.4.2",
+    "@capacitor/local-notifications": "7.0.0",
+    "@capacitor/preferences": "7.0.0",
+    "@capacitor/haptics": "7.0.0",
+    "@capacitor/app": "7.0.0",
+    "@capacitor/keyboard": "7.0.0",
+    "@capacitor/status-bar": "7.0.0",
+    "@capacitor/toast": "7.0.0",
+    "@capacitor/filesystem": "7.0.0",
+    "@capacitor/screen-reader": "7.0.0",
+    "@capacitor/cli": "7.4.2",
+    "@capacitor/text-zoom": "7.0.0",
+    "@capacitor/camera": "7.0.0",
+    "@capacitor/share": "7.0.0",
+    "@capacitor/browser": "7.0.0",
+    "@capacitor/network": "7.0.0",
+    "@capacitor/device": "7.0.0",
+    "@capacitor-community/text-to-speech": "^6.0.0"
+  }
+}
