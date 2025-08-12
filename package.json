@@ -28,6 +28,9 @@
     "@capacitor/toast": "7.0.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "7.4.2"
+    "@capacitor/cli": "7.4.2",
+    "@types/node": "^24.2.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   }
 }
